@@ -23,13 +23,16 @@ import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
 import com.example.android.unscramble.R
 import com.example.android.unscramble.databinding.GameFragmentBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Fragment where the game is played, contains the game logic.
  */
+@AndroidEntryPoint
 class GameFragment : Fragment() {
 
     // Binding object instance with access to the views in the game_fragment.xml layout
@@ -59,6 +62,11 @@ class GameFragment : Fragment() {
         // Specify the fragment view as the lifecycle owner of the binding.
         // This is used so that the binding can observe LiveData updates
         binding.lifecycleOwner = viewLifecycleOwner
+
+//        viewModel.currentShuffledWord.observe(viewLifecycleOwner, Observer {
+//            binding.textViewUnscrambledWord.text = it
+//        })
+//        binding.textViewUnscrambledWord
 
         // Setup a click listener for the Submit and Skip buttons.
         binding.submit.setOnClickListener { onSubmitWord() }

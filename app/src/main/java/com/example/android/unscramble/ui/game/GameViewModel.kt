@@ -16,37 +16,38 @@
 
 package com.example.android.unscramble.ui.game
 
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.TtsSpan
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-/**
- * ViewModel containing the app data and methods to process the data
- */
-
-
-class GameViewModel : ViewModel() {
+@HiltViewModel
+class GameViewModel @Inject constructor(
+    private val repository: GameRepository
+) : ViewModel() {
     private val _score = MutableLiveData(0)
     val score: LiveData<Int>
         get() = _score
 
     private val _currentWordCount = MutableLiveData(0)
+
     val currentWordCount: LiveData<Int>
         get() = _currentWordCount
 
-    private val _currentWord = MutableLiveData<String>()
-    val currentWord : LiveData<String>
-        get() = _currentWord
+    // 현재 단어의 뒤섞인 버전 (View에서 표시)
+    private val _currentShuffledWord = MutableLiveData<String>()
+    val currentShuffledWord : LiveData<String>
+        get() = _currentShuffledWord
 
-    // List of words used in the game
+    // 게임에서 사용된 단어 리스트
     private var wordsList: MutableList<String> = mutableListOf()
-    private lateinit var currentWord1: String
 
+    // 현재 단어
+    private lateinit var currentWord: String
+
+    // 게임이 끝났는지 확인하기 위한 변수
     private var isGameOver: Boolean = false
 
     init {
@@ -56,23 +57,28 @@ class GameViewModel : ViewModel() {
     /*
      * Updates currentWord and currentScrambledWord with the next word.
      */
+
     private fun getNextWord() {
-        currentWord1 = allWordsList.random()
+        currentWord = repository.getAllWordsList().random()
 
-        val tempWord = currentWord1.toCharArray()
-        tempWord.shuffle()
-
-        while (String(tempWord).equals(currentWord1, false)) {
-            tempWord.shuffle()
-        }
-        if (wordsList.contains(currentWord1)) {
+        if (wordsList.contains(currentWord)) {
             getNextWord()
         } else {
-            Log.d("Unscramble", "currentWord= $currentWord1")
-            _currentWord.value = String(tempWord)
+            Log.d("Unscramble", "currentWord= $currentWord")
+            _currentShuffledWord.value = shuffleWord(currentWord)
             _currentWordCount.value = _currentWordCount.value?.inc()
-            wordsList.add(currentWord1)
+            wordsList.add(currentWord)
         }
+    }
+
+    private fun shuffleWord(word : String) : String{
+        val tempWord = word.toCharArray()
+        tempWord.shuffle()
+
+        while (String(tempWord).equals(word, false)) {
+            tempWord.shuffle()
+        }
+        return String(tempWord)
     }
 
     /*
@@ -98,7 +104,7 @@ class GameViewModel : ViewModel() {
     * Increases the score accordingly.
     */
     fun isUserWordCorrect(playerWord: String): Boolean {
-        if (playerWord.equals(currentWord1, true)) {
+        if (playerWord.equals(currentWord, true)) {
             increaseScore()
             return true
         }
